@@ -6,46 +6,50 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-
-  <div class="keys">
-    <div data-key="65" class="key">
-      <kbd>A</kbd>
-      <span class="sound">clap</span>
-    </div>
-    <div data-key="83" class="key">
-      <kbd>S</kbd>
-      <span class="sound">hihat</span>
-    </div>
-    <div data-key="68" class="key">
-      <kbd>D</kbd>
-      <span class="sound">kick</span>
-    </div>
-    <div data-key="70" class="key">
-      <kbd>F</kbd>
-      <span class="sound">openhat</span>
-    </div>
-    <div data-key="71" class="key">
-      <kbd>G</kbd>
-      <span class="sound">boom</span>
-    </div>
-    <div data-key="72" class="key">
-      <kbd>H</kbd>
-      <span class="sound">ride</span>
-    </div>
-    <div data-key="74" class="key">
-      <kbd>J</kbd>
-      <span class="sound">snare</span>
-    </div>
-    <div data-key="75" class="key">
-      <kbd>K</kbd>
-      <span class="sound">tom</span>
-    </div>
-    <div data-key="76" class="key">
-      <kbd>L</kbd>
-      <span class="sound">tink</span>
-    </div>
+<div class="wrapper">
+    <div class="keys">
+      <div data-key="65" class="key">
+        <kbd>A</kbd>
+        <span class="sound">clap</span>
+      </div>
+      <div data-key="83" class="key">
+        <kbd>S</kbd>
+        <span class="sound">hihat</span>
+      </div>
+      <div data-key="68" class="key">
+        <kbd>D</kbd>
+        <span class="sound">kick</span>
+      </div>
+      <div data-key="70" class="key">
+        <kbd>F</kbd>
+        <span class="sound">openhat</span>
+      </div>
+      <div data-key="71" class="key">
+        <kbd>G</kbd>
+        <span class="sound">boom</span>
+      </div>
+      <div data-key="72" class="key">
+        <kbd>H</kbd>
+        <span class="sound">ride</span>
+      </div>
+      <div data-key="74" class="key">
+        <kbd>J</kbd>
+        <span class="sound">snare</span>
+      </div>
+      <div data-key="75" class="key">
+        <kbd>K</kbd>
+        <span class="sound">tom</span>
+      </div>
+      <div data-key="76" class="key">
+        <kbd>L</kbd>
+        <span class="sound">tink</span>
+      </div>
   </div>
+
+  <div class=controls>
+    <div id="replay">Replay</div>
+  </div>
+</div>
 
   <audio data-key="65" src="sounds/clap.wav"></audio>
   <audio data-key="83" src="sounds/hihat.wav"></audio>
@@ -58,9 +62,65 @@
   <audio data-key="76" src="sounds/tink.wav"></audio>
 
 <script>
+  let preNoteTime = null;
+  const noteArray = [];
+  const noteInterval = [];
+  const tempoSetting = 0;
+  const btnReplay = document.getElementById( 'replay' );
 
+  window.addEventListener('keydown', function( e ){
+    const keyCode = e.keyCode;
+    const audio = document.querySelector( `audio[data-key="${keyCode}"`);
+    const divKey = document.querySelector( `.key[data-key="${keyCode}"`);
+    const noteTime = new Date( ).getTime( );
+
+    if ( noteArray.length > 0 )
+    {
+      noteInterval.push ( noteTime - preNoteTime );
+      console.log( noteInterval );
+    }
+    
+    playNotes( audio, divKey );
+
+    preNoteTime = noteTime;
+    noteArray.push( keyCode );
+  });
+
+  btnReplay.addEventListener( 'click', function( e ){
+    if (noteArray.length < 1 ) return;
+
+    let promise = Promise.resolve( );
+    noteArray.forEach( (key, index) => {
+      promise = promise.then(( ) => {
+        const audio = document.querySelector( `audio[data-key="${key}"`);
+        const divKey = document.querySelector( `.key[data-key="${key}"`);
+        playNotes( audio, divKey );
+        return new Promise ( resolve => {
+          setTimeout( resolve, ( tempoSetting > 0 ) ? tempoSetting : noteInterval[index] );
+        });
+      });
+    });
+
+    promise.then( ( ) => {
+      console.log( 'Replay loop complete.');
+    });
+  });
+
+  function playNotes ( audio, divKey ) {
+    if ( !audio ) return;
+    audio.currentTime = 0;
+    audio.play();
+    divKey.classList.add( 'playing' );
+  };
+  
+  function removeTransition (e) {
+    if(e.propertyName !== 'transform' ) return;
+    this.classList.remove( 'playing' );
+  };
+
+  const keys = Array.from( document.querySelectorAll( '.key' ) );
+  keys.forEach( key => key.addEventListener ('transitionend', removeTransition ));
 </script>
-
 
 </body>
 </html>
